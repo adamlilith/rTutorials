@@ -94,7 +94,7 @@ plot(mo)
 The projected map of Missouri looks only *slightly* different from the unprojected map, but this is because the state is fairly small compared to the curvature of the Earth.
 
 ##Creating a "points"" shape from raw data
-We will also use a database of major Ozarkian springs surveyed by Julian Steyermark in the 1920s-2030s. You can obtain it from [www.earthSkySea.org/!ecology/data/steyermarkSprings.zip](www.earthSkySea.org/!ecology/data/steyermarkSprings.zip). Unzip this and load it into `R` as a data frame.
+We will also use a database of major Ozarkian springs surveyed by Julian Steyermark in the 1920s-2030s. You can obtain it from [GitHub](https://github.com/adamlilith/rTutorials/blob/master/steyermarkSprings.csv). Unzip this and load it into `R` as a data frame.
 
 ```{r, echo=FALSE}
 steyer <- read.csv('C:/Ecology/Drive/Research/Steyermark Resurvey Project/Data/Steyermark Springs 2014-07-08 Updated taxonomy.csv', as.is=TRUE)
@@ -295,14 +295,13 @@ legendary::legendGrad(
 ```
 
 Finally, we can save the Steyermark spatial object.  The smallest kind of file will be a normal `.RData` file (or `.RDS` file):
-{r, eval=FALSE}
+```{r, eval=FALSE}
 save(steyer, file='./Steyermark Springs.Rdata')
 ```
 
-But we can also save it in "shapefile" format for importing into a GIS program like ArcMap or QGIS:
+But we can also save it in "shapefile" format for use in a dedicated GIS program like ArcMap or QGIS:
 ```{r, eval=FALSE}
 dismo::shapefile(steyer, 'steyermarkSprings')
 ```
-
 
 **FINIS!**
