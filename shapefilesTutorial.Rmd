@@ -301,7 +301,7 @@ save(steyer, file='./Steyermark Springs.Rdata')
 
 But we can also save it in "shapefile" format for use in a dedicated GIS program like ArcMap or QGIS:
 ```{r, eval=FALSE}
-dismo::shapefile(steyer, 'steyermarkSprings')
+raster::shapefile(steyer, 'steyermarkSprings')
 ```
 
 **FINIS!**
