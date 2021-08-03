@@ -67,16 +67,19 @@
 ###################
 
 	### country and province outlines
+	#################################
+
 	# NB: as of August 1st, the getData() function and the associated websites are not working, perhaps because of wildfires in California. So the two lines below may not work. If not, skip to the next two and change the path to the files on your computer.
 	
-	# country and province outlines
+	# download from source
 	nepal0 <- getData('GADM', country='NPL', level=0)
 	nepal1 <- getData('GADM', country='NPL', level=1)
 
 	# alternative #1: from GitHub
-	url <- 
-	load('E:/Ecology/Drive/R/rTutorials/data/nepal0.rda')
-	load('E:/Ecology/Drive/R/rTutorials/data/nepal1.rda')
+	url <- url('https://github.com/adamlilith/rTutorials/raw/master/data/nepal0.rda')
+	load(url)
+	url <- url('https://github.com/adamlilith/rTutorials/raw/master/data/nepal1.rda')
+	load(url)
 	
 	# alternative #2: from disk
 	# change the path name accordingly
@@ -88,10 +91,29 @@
 	nepal1 <- vect(nepal1)
 	
 	### download elevation raster
+	#############################
+	
+	# download from source
 	elev <- getData('alt', country='NPL')
 	
-	# same problem as before... load from disk
+	# alternative #1: from GitHub
+	url <- 'https://github.com/adamlilith/rTutorials/raw/master/data/nepal_elevation.tif'
+	elev <- rast(url)
+	
+	# alternative #2: from your computer
 	elev <- rast('E:/Ecology/Drive/R/rTutorials/data/nepal_elevation.tif')
+	
+	### occurrence data
+	###################
+	
+	# for Daphne bholua, courtesy of James Lucas!
+	
+	# Please note that the coordinate have been rounded.
+	url <- url('https://github.com/adamlilith/rTutorials/raw/master/data/daphne_bholua.csv')
+	occs <- read.csv(url)
+	
+	# alternative #1: from your computer
+	occs <- read.csv('E:/Ecology/Drive/R/rTutorials/data/daphne_bholua.csv')
 	
 ######################
 ### simple(?) plot ###
@@ -115,6 +137,10 @@ range <- c(0, 5000)
 plot(elev, col=terrainCols, range=range)
 plot(snow, col=c(NA, 'white'), add=TRUE)
 plot(nepal0, add=TRUE)
+
+# add occurrence data
+ll <- c('longitude', 'latitude')
+points(occs[ , ll])
 
 #######################
 ### raster metadata ###
