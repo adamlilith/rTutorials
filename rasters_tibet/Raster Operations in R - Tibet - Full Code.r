@@ -351,6 +351,9 @@ cuIsNa <- which(is.na(occsVect$coordUncertainty_meters))
 occsCuNa <- occsVect[cuIsNa, ]
 points(occsCuNa, pch=16, cex=0.3, col='red')
 
+### convert occurrences to a SpatVector object
+occsVect <- vect(occs[ , ll], atts=occs, crs=wgs84)
+
 #######################
 ### make nice plot! ###
 #######################
@@ -437,13 +440,15 @@ legendGrad(
 
 ## add scale bar
 # We need to get the x/y position of the left side of the scale bar. We can use click(), but here we'll do it automatically based on the corners of the plot region. This code places it in the bottom left of the map.
-x <- corners[1] + 0.03 * (corners[2] - corners[1])
-y <- corners[3] + 0.04 * (corners[4] - corners[3])
+corners <- par('usr') # corners of the plot area
+x <- corners[1] + 0.02 * (corners[2] - corners[1])
+y <- corners[3] + 0.13 * (corners[4] - corners[3])
 
-xy <- c(x, y) # left, center of scale bar
+xy <- c(x, y) # left and center of scale bar
 sbar(100, xy=xy, below='kilometers', type='bar', adj=c(0.5, -1), cex=0.8)
 
 ## add occurrences
-occsFocal <- crop(occsVect, box)
+# crop occurrences to the bounding box
+occsFocal <- crop(occsVect, ext(provBuff))
 points(occsFocal)
 

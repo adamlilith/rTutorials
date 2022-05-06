@@ -108,32 +108,58 @@ elev <- rast('E:/Ecology/Drive/R/rTutorials/data/nepal_elevation.tif')
 ######################
 
 # plain plot... colors are backwards!
+plot(elev)
 
 # breaks plot... yes, backwards!
+plot(elev, breaks=10)
 
 # re-order colors
+cols <- terrain.colors(100)
+plot(elev, col=cols)
 
 # force areas >5000 m to be white... better
+snow <- elev > 5000
+plot(elev, col=cols)
+plot(snow, col=c(NA, 'white'), add=TRUE)
 
 # improve this by plotting areas <5000 and >=5000 m separately
+plot(elev, col=cols, range=c(0, 5000))
+plot(snow, col=c(NA, 'white'), add=TRUE)
 
 #######################
 ### raster metadata ###
 #######################
-	
+
 elev # metadata
+
+# assigning a coordinate reference system
+wgs84 <- '+proj=longlat +datum=WGS84 +no_defs'
+
+crs(elev) <- wgs84
 
 ## how to get this metadata
 # coordinate reference system
+crs(elev)
 
 # extent
+ext(elev)
+xmin(elev)
+ymin(elev)
 
 # resolution (cell size)
+res(elev)
 
 # names
+names(elev)
 
 # rows, columns, cells, and layers
-	
+nrow(elev)
+ncol(elev)
+ncell(elev)
+nlyr(elev)
+
+?terra
+
 ###################
 ###	raster math ###
 ###################
@@ -141,10 +167,28 @@ elev # metadata
 # All of these operations produce a new raster.
 
 # single-raster math
+new <- elev + 1000
+new <- elev - 1000
+new <- elev / 1000
+new <- elev * 1000
+new <- elev^2
+new <- sqrt(elev)
 
 # logical operations
+new <- elev > 1000 & elev < 3000
+plot(new)
+
+new <- elev == 50
+plot(new)
 
 # raster-by-raster math
+new <- elev + elev
+plot(new)
+
+# to make two rasters congruent
+elev1 <- project(elev1, elev) # CRS
+elev1 <- resample(elev1, elev) # cell size
+elev1 <- crop(elev1, elev) # overlap
 
 #################################
 ###	"whole-raster" statistics ###
@@ -155,10 +199,18 @@ elev # metadata
 elev # notice the min/max values are shown
 
 # mean
+stat <- global(elev, 'mean')
+stat
+class(stat)
+stat$mean
 
 # min/max
+global(elev, 'min')
+global(elev, 'max')
+global(elev, median)
 
 # quantiles
+global(elev, quantile, prob=0.95)
 
 ############
 ###	area ###
@@ -169,10 +221,18 @@ elev # notice the min/max values are shown
 # NB: area of Nepal is 147,516 km2
 
 # area of raster cells
+expanse(elev) / 1000^2
+
+plot(elev)
+plot(nepal0, add=TRUE)
 
 # area of polygon
+expanse(nepal0) / 1000^2
 
 # area of raster cells that touch the polygon
+nepalRast <- rasterize(nepal0, elev)
+plot(nepalRast)
+expanse(nepalRast) / 1000^2
 
 #################################
 ###	slope, aspect, hill shade ###
@@ -185,16 +245,39 @@ elev # notice the min/max values are shown
 ### generate hillshade raster
 
 # manually select a province
+plot(nepal1)
+where <- click(nepal1, n=1)
+where
+
+prov <- nepal1[nepal1$VARNAME_1 == 'Madhyamanchal', ]
+
+plot(prov)
 
 # enlarge focal area for a nicer plot
+buff <- buffer(prov, 20000)
+
+plot(buff)
+plot(prov, col='blue', add=TRUE)
 
 # crop elevation raster to this province
+elevProv <- crop(elev, buff)
+
+plot(elevProv)
+plot(prov, add=TRUE)
 
 # slope and aspect
+slope <- terrain(elev, 'slope', unit='radians')
+aspect <- terrain(elev, 'aspect', unit='radians')
+
+topo <- c(slope, aspect)
+plot(topo)
 
 # hillshade
+hs <- shade(slope, aspect, direction=180)
 
 # an OK plot
+grays <- paste('gray', 100:30)
+plot(hs, col=grays)
 
 ###################
 ### occurrences ###
@@ -214,30 +297,73 @@ occs <- read.csv('E:/Ecology/Drive/R/rTutorials/data/daphne_bholua.csv')
 head(occs)
 
 # plot... strange!
+ll <- c('longitude', 'latitude')
+plot(occs[ , ll])
+plot(nepal0, border='blue', add=TRUE)
 
 # look at coordinates
+occs[  , ll]
 
 # remove 0,0 coordinates
+bads <- which(
+	occs$longitude == 0 |
+	occs$latitude == 0
+)
+
+bads
+
+nrow(occs)
+occs <- occs[-bads, ]
+nrow(occs)
 
 # remove NA coordinates
+bads <- which(
+	is.na(occs$longitude) |
+	is.na(occs$latitude)
+)
+
+bads
+
+nrow(occs)
+occs <- occs[-bads, ]
+nrow(occs)
 
 # correct record with negative latitude
+neg <- which(occs$latitude < 0)
+occs$latitude[neg]
+occs$latitude[neg] <- -1 * occs$latitude[neg]
 
 # re-plot
+plot(nepal0, border='blue')
+points(occs[ , ll])
 
 ### zoom
+# lets you interactively zoom into a place
+zoom(nepal0)
+points(occs[ , ll])
 
 ### coordinate uncertainty
-# Examine coordinate uncertainties by constructing buffers around each point with radius equal to uncertainty.
+# examine coordinate uncertainties by constructing buffers around each point with radius equal to uncertainty
 
 # convert occurrences to a SpatVector
 wgs84 <- '+proj=longlat +datum=WGS84 +no_defs'
+longLat <- as.matrix(occs[ , ll])
+occsVect <- vect(longLat, 'points', atts=occs, crs=wgs84)
+occsVect
 
 # buffer
+occsVect$coordUncertainty_meters
+cu <- buffer(occsVect, occsVect$coordUncertainty_meters)
 
 # plot
+plot(cu)
+points(occsVect, pch='.')
+plot(nepal0, add=TRUE)
 
 # highlight records with no CU
+cuIsNa <- which(is.na(occsVect$coordUncertainty_meters))
+occsCuNa <- occsVect[cuIsNa, ]
+points(occsCuNa, pch=16, cex=0.3, col='red')
 
 #######################
 ### make nice plot! ###
