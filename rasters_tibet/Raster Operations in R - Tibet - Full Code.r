@@ -28,16 +28,16 @@ rm(list=ls())
 # Note that this section installs the packages
 # if they are not yet on your system.
 
-# raster package: old package for rasters
-if (!require(raster)) {
-	install.packages('raster')
-	library(raster)
-}
-
 # terra package: new package for rasters
 if (!require(terra)) {
 	install.packages('terra')
 	library(terra)
+}
+
+# terra package: new package for rasters
+if (!require(geodata)) {
+	install.packages('geodata')
+	library(geodata)
 }
 
 # scales package: has function alpha() for transparent colors
@@ -72,8 +72,8 @@ if (!require(legendary)) {
 # NB: as of August 1st, the getData() function and the associated websites are not working, perhaps because of wildfires in California. So the two lines below may not work. If not, skip to the next two and change the path to the files on your computer.
 
 # download from source
-nepal0 <- getData('GADM', country='NPL', level=0)
-nepal1 <- getData('GADM', country='NPL', level=1)
+nepal0 <- gadm(country='NPL', level=0, path=getwd())
+nepal1 <- gadm(country='NPL', level=1, path=getwd())
 
 # alternative #1: from GitHub
 url <- url('https://github.com/adamlilith/rTutorials/raw/master/data/nepal0.rda')
@@ -86,15 +86,10 @@ load(url)
 load('E:/Ecology/Drive/R/rTutorials/data/nepal0.rda')
 load('E:/Ecology/Drive/R/rTutorials/data/nepal1.rda')
 
-# convert to SpatVector (terra) format
-nepal0 <- vect(nepal0)
-nepal1 <- vect(nepal1)
-
 ### download elevation raster
 
 # download from source
-elev <- getData('alt', country='NPL', mask=FALSE)
-elev <- rast(elev)
+elev <- elevation_30s(country='NPL', mask=FALSE, path=getwd())
 
 # alternative #1: from GitHub
 url <- 'https://github.com/adamlilith/rTutorials/raw/master/data/nepal_elevation.tif'
@@ -138,7 +133,7 @@ ext(elev) # extent
 res(elev) # resolution
 names(elev) # names of the layer(s)
 
-# extent
+# spatial extent of the raster
 xmin(elev)
 xmax(elev)
 
@@ -167,6 +162,7 @@ newElev <- elev - 10
 newElev <- elev * 10
 newElev <- elev^2
 
+# show areas with elevation > 1000 and < 2000 meters
 newElev <- elev > 1000 & elev <= 2000
 plot(newElev)
 	
@@ -201,6 +197,7 @@ stat
 # quantiles
 p <- c(0.05, 0.95)
 stat <- global(elev, fun=quantile, probs=p)
+stat
 
 ############
 ###	area ###
@@ -218,7 +215,7 @@ expanse(elev) / 1000^2 # in km2
 expanse(nepal0) / 1000^2
 
 # area of raster cells that touch the polygon
-nepalRast <- rasterize(nepal0, elev)
+nepalRast <- rasterize(nepal0, elev) # convert polygon to a raster
 plot(nepalRast)
 expanse(nepalRast) / 1000^2 # in km2
 
@@ -234,24 +231,28 @@ expanse(nepalRast) / 1000^2 # in km2
 
 # manually select a province
 plot(nepal1)
-where <- click(nepal1, n=1) # click a province
+where <- click(nepal1, n=1) # click a province on the plot
 where
 
+# get just the vector for the province your clicked
 provName <- where$VARNAME_1
 prov <- nepal1[nepal1$VARNAME_1 == provName, ]
 plot(prov)
 
-# enlarge focal area for a nicer plot
-provBuff <- buffer(prov, 30000)
+# enlarge plot area for a nicer look
+provBuff <- buffer(prov, 30000) # adds a 30-km buffer around the province
 plot(provBuff)
-plot(prov, col='red', add=TRUE)
+plot(prov, col='forestgreen', add=TRUE)
 
-# crop elevation raster to this province
+# crop elevation raster to the plot area
 elevProv <- crop(elev, provBuff)
 plot(elevProv)
 plot(prov, add=TRUE)
 
-# slope and aspect
+# to make a nicer plot, we'll add a "hillshade" raster that create "shadows"
+# so it appears as if we were looking down from space (kinda...)
+
+# calculate slope and aspect
 aspect <- terrain(elevProv, 'aspect', unit='radians')
 slope <- terrain(elevProv, 'slope', unit='radians')
 
@@ -261,7 +262,7 @@ plot(topo)
 # hillshade
 hillshade <- shade(slope, aspect, direction=180)
 
-# an OK plot
+# a somewhat realistic plot
 grays <- paste0('gray', 100:30)
 plot(hillshade, col=grays)
 
@@ -271,7 +272,7 @@ plot(hillshade, col=grays)
 
 ### load data
 # for Daphne bholua, courtesy of James Lucas!
-# Please note that the coordinate have been rounded, and that I added some commonly-observed issues that were not in the data James sent me.
+# Please note that the coordinate have been rounded, and that I added some commonly-observed issues that were not in the data James sent me.  "Errors" are ones I introduced!!!
 
 url <- url('https://github.com/adamlilith/rTutorials/raw/master/data/daphne_bholua.csv')
 occs <- read.csv(url)
@@ -325,7 +326,7 @@ points(occs[ , ll])
 
 ### zoom
 # lets you interactively zoom into a place
-zoom(nepal0)
+zoom(nepal0) # click two places on the plot to define a rectangle
 points(occs[ , ll])
 
 ### coordinate uncertainty
@@ -337,22 +338,19 @@ longLat <- as.matrix(occs[ , ll])
 occsVect <- vect(longLat, 'points', atts=occs, crs=wgs84)
 occsVect
 
-# buffer
+# buffer points
 occsVect$coordUncertainty_meters
 cu <- buffer(occsVect, occsVect$coordUncertainty_meters)
 
-# plot
+# plot radii reflecting uncertainty in coordinates
 plot(cu)
 points(occsVect, pch='.')
 plot(nepal0, add=TRUE)
 
-# highlight records with no CU
+# highlight records with no coordinate uncertainty
 cuIsNa <- which(is.na(occsVect$coordUncertainty_meters))
 occsCuNa <- occsVect[cuIsNa, ]
 points(occsCuNa, pch=16, cex=0.3, col='red')
-
-### convert occurrences to a SpatVector object
-occsVect <- vect(occs[ , ll], atts=occs, crs=wgs84)
 
 #######################
 ### make nice plot! ###
@@ -384,9 +382,6 @@ snowProv <- elevProv >= 5000
 aspect <- terrain(elevProv, 'aspect', unit='radians')
 slope <- terrain(elevProv, 'slope', unit='radians')
 
-topo <- c(aspect, slope)
-plot(topo)
-
 # hillshade
 hillshade <- shade(slope, aspect, direction=180)
 
@@ -401,7 +396,7 @@ plot(snowProv, col=c(NA, snowwhite), axes=FALSE, legend=FALSE, add=TRUE)
 plot(nepal1focus, add=TRUE)
 
 # add contour lines at 5000 m
-contour(elevProv, levels=5000, border='gray', add=TRUE)
+contour(elevProv, levels=5000, border='gray60', add=TRUE)
 
 ## add a custom gradient legend
 
@@ -451,4 +446,3 @@ sbar(100, xy=xy, below='kilometers', type='bar', adj=c(0.5, -1), cex=0.8)
 # crop occurrences to the bounding box
 occsFocal <- crop(occsVect, ext(provBuff))
 points(occsFocal)
-
