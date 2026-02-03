@@ -29,7 +29,7 @@ library(scales) # transparency and units of measurement
 library(omnibus) # helper functions
 
 # legends (and new kinds of plots)
-# Need to install this fro GitHub because it's not yet on CRAN:
+# Need to install this from GitHub because it's not yet on CRAN:
 devtools::install_github('adamlilith/legendary')
 library(legendary)
 
