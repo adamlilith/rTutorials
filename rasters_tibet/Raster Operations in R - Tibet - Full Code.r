@@ -1,4 +1,4 @@
-### RASTER OPERATIONS IN R: A TUTORIAL
+### GIS OPERATIONS IN R: A TUTORIAL
 ### Adam B. Smith | Missouri Botanical Garden | adam.smith@mobot.org | 2026-02
 ###
 ### CONTENTS ###
