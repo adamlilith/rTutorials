@@ -44,7 +44,7 @@ library(legendary)
 
 ### country and province outlines
 
-# NB: as of August 1st, the getData() function and the associated websites are not working, perhaps because of wildfires in California. So the two lines below may not work. If not, skip to the next two and change the path to the files on your computer.
+# NB: Sometimes the geodata package and associated websites are not working, perhaps because of wildfires in California. So the two lines below may not function. If not, skip to "alternative" method below.
 
 # download from source (using low-resolution data for speed)
 india_level_0 <- geodata::gadm(
