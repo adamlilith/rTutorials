@@ -44,7 +44,7 @@ library(legendary)
 
 ### country and province outlines
 
-# NB: Sometimes the geodata package and associated websites are not working, perhaps because of wildfires in California. So the two lines below may not function. If not, skip to "alternative" method below.
+# NB: as of August 1st, the getData() function and the associated websites are not working, perhaps because of wildfires in California. So the two lines below may not work. If not, skip to the next two and change the path to the files on your computer.
 
 # download from source (using low-resolution data for speed)
 india_level_0 <- geodata::gadm(
@@ -99,23 +99,23 @@ elev <- geodata::elevation_30s(country = 'NPL', mask = FALSE, path = tempdir())
 ### simple maps ###
 ###################
 
-plot(elev) # viridis color scale... not great for terrain
+terra::plot(elev) # viridis color scale... not great for terrain
 
 # terrain colors for elevation
 terrain_colors <- terrain.colors(100)
-plot(elev, col = terrain_colors)
+terra::plot(elev, col = terrain_colors)
 
 # force areas >5250 m to be white... better
 snow <- elev >= 5250
 snow[snow == 0] <- NA # force "not snow" to NA for plotting
-plot(elev, col = terrain_colors)
-plot(snow, col = 'white', add = TRUE)
+terra::plot(elev, col = terrain_colors)
+terra::plot(snow, col = 'white', add = TRUE)
 
 # improve this by removing areas >5250 m (permanent snowline)
 # so terrain color ramp "stretches" appropriately
 elev_no_snow <- elev
 elev_no_snow[elev_no_snow > 5250] <- NA
-plot(elev_no_snow, col = terrain_colors) # values >5250 not plotted (= white)
+terra::plot(elev_no_snow, col = terrain_colors) # values >5250 not plotted (= white)
 plot(nepal_level_0, add = TRUE) # max value on legend is misleading!
 
 #######################
@@ -129,8 +129,8 @@ res(elev) # resolution (in degrees, for this coordinate reference system)
 names(elev) # names of the layer(s)
 
 # spatial extent of the raster
-ext(elev) # extent
-as.vector(ext(elev)) # if you need the coordinates of the corners
+terra::ext(elev) # extent
+terra::as.vector(ext(elev)) # if you need the coordinates of the corners
 xmin(elev)
 xmax(elev)
 ymin(elev)
@@ -237,6 +237,9 @@ terra::expanse(elev) / 1000^2 # in km2
 elev_nepal <- terra::mask(elev, nepal_level_0)
 plot(elev_nepal)
 terra::expanse(elev_nepal) / 1000^2 # in km2
+
+elev_mask <- mask(elev, nepal_level_0)
+expanse(elev_mask) / 1000^2
 
 ####################################
 ### occurrences of Daphne bholua ###
